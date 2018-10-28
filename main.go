@@ -18,23 +18,14 @@ type TLSState struct {
 	ExpireDateUtc    time.Time
 }
 
-type CurvePreferencesStates struct {
-	X25519    bool
-	CurveP256 bool
-	CurveP384 bool
-	CurveP521 bool
-}
-
 type SSLCheck interface {
 	CreateClient() (client *http.Client)
 	Pass(response *http.Response, result *TLSState)
 }
 
 func getAllCheck() []SSLCheck {
-	result := append(
-		GetTLSVersionCheck(),
-		GetCipherSuitesCheck()...,
-	)
+	result := append(GetTLSVersionCheck(), GetCipherSuitesCheck()...)
+	result = append(result, GetCurvePreferenceCheck()...)
 	return append(result, &SSLCheckBasic{})
 }
 
