@@ -1,12 +1,16 @@
 package main
 
 import (
+	"crypto/tls"
+	"encoding/json"
+	"flag"
 	"fmt"
 	"net/http"
 	"time"
 )
 
 type TLSState struct {
+	Host             string
 	Enabled          bool
 	HSTSEnabled      bool
 	Version          TLSVersionStates
@@ -54,13 +58,43 @@ type CurvePreferencesStates struct {
 	CurveP521 bool
 }
 
+type SSLCheck interface {
+	CreateClient() (client *http.Client)
+	Pass(result *TLSState)
+}
+
+type SSLCheckTLS12 struct {
+}
+
+func (check *SSLCheckTLS12) CreateClient() (client *http.Client) {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12, MaxVersion: tls.VersionTLS12},
+	}
+	return &http.Client{Transport: tr}
+}
+
+func (check *SSLCheckTLS12) Pass(result *TLSState) {
+	result.Version.TLS12 = true
+}
+
+func checkHost(host *string) (result TLSState) {
+	result = TLSState{Host: *host}
+	var check SSLCheck = &SSLCheckTLS12{}
+	client := check.CreateClient()
+	_, err := client.Get("https://" + *host + "/")
+	if err == nil {
+		check.Pass(&result)
+	}
+	return result
+}
+
 func main() {
-	resp, _ := http.Get("https://google.co.jp")
-	expireUTCTime := resp.TLS.PeerCertificates[0].NotAfter
-	fmt.Println(resp.TLS.Version)
-	fmt.Println(resp.TLS.CipherSuite)
-	fmt.Println(resp.TLS.NegotiatedProtocol)
-	expireJSTTime := expireUTCTime.In(time.FixedZone("Asia/Tokyo", 9*60*60))
-	expireDate := expireJSTTime.Format("2006/01/02 15:04")
-	fmt.Println(expireDate)
+	host := flag.String("host", "example.com:443", "example.com:443")
+	flag.Parse()
+	result := checkHost(host)
+	json, err := json.Marshal(&result)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(json))
 }
