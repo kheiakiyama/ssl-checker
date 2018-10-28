@@ -6,6 +6,7 @@ import (
 )
 
 type TLSVersionStates struct {
+	SSL30 bool
 	TLS10 bool
 	TLS11 bool
 	TLS12 bool
@@ -13,50 +14,33 @@ type TLSVersionStates struct {
 
 func GetTLSVersionCheck() []SSLCheck {
 	return []SSLCheck{
-		&SSLCheckTLS10{},
-		&SSLCheckTLS11{},
-		&SSLCheckTLS12{},
+		&SSLCheckVersion{Version: tls.VersionSSL30},
+		&SSLCheckVersion{Version: tls.VersionTLS10},
+		&SSLCheckVersion{Version: tls.VersionTLS11},
+		&SSLCheckVersion{Version: tls.VersionTLS12},
 	}
 }
 
-type SSLCheckTLS10 struct {
+type SSLCheckVersion struct {
+	Version uint16
 }
 
-func (check *SSLCheckTLS10) CreateClient() (client *http.Client) {
+func (check *SSLCheckVersion) CreateClient() (client *http.Client) {
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS10, MaxVersion: tls.VersionTLS10},
+		TLSClientConfig: &tls.Config{MinVersion: check.Version, MaxVersion: check.Version},
 	}
 	return &http.Client{Transport: tr}
 }
 
-func (check *SSLCheckTLS10) Pass(result *TLSState) {
-	result.Version.TLS10 = true
-}
-
-type SSLCheckTLS11 struct {
-}
-
-func (check *SSLCheckTLS11) CreateClient() (client *http.Client) {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS11, MaxVersion: tls.VersionTLS11},
+func (check *SSLCheckVersion) Pass(result *TLSState) {
+	switch check.Version {
+	case tls.VersionSSL30:
+		result.Version.SSL30 = true
+	case tls.VersionTLS10:
+		result.Version.TLS10 = true
+	case tls.VersionTLS11:
+		result.Version.TLS11 = true
+	case tls.VersionTLS12:
+		result.Version.TLS12 = true
 	}
-	return &http.Client{Transport: tr}
-}
-
-func (check *SSLCheckTLS11) Pass(result *TLSState) {
-	result.Version.TLS11 = true
-}
-
-type SSLCheckTLS12 struct {
-}
-
-func (check *SSLCheckTLS12) CreateClient() (client *http.Client) {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{MinVersion: tls.VersionTLS12, MaxVersion: tls.VersionTLS12},
-	}
-	return &http.Client{Transport: tr}
-}
-
-func (check *SSLCheckTLS12) Pass(result *TLSState) {
-	result.Version.TLS12 = true
 }

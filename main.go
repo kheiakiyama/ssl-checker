@@ -13,34 +13,9 @@ type TLSState struct {
 	Enabled          bool
 	HSTSEnabled      bool
 	Version          TLSVersionStates
-	Cliper           CliperStates
+	Cliper           CiperStates
 	CurvePreferences CurvePreferencesStates
 	ExpireDateUtc    time.Time
-}
-
-type CliperStates struct {
-	TLS_RSA_WITH_RC4_128_SHA                bool
-	TLS_RSA_WITH_3DES_EDE_CBC_SHA           bool
-	TLS_RSA_WITH_AES_128_CBC_SHA            bool
-	TLS_RSA_WITH_AES_256_CBC_SHA            bool
-	TLS_RSA_WITH_AES_128_CBC_SHA256         bool
-	TLS_RSA_WITH_AES_128_GCM_SHA256         bool
-	TLS_RSA_WITH_AES_256_GCM_SHA384         bool
-	TLS_ECDHE_ECDSA_WITH_RC4_128_SHA        bool
-	TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA    bool
-	TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA    bool
-	TLS_ECDHE_RSA_WITH_RC4_128_SHA          bool
-	TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA     bool
-	TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA      bool
-	TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA      bool
-	TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256 bool
-	TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256   bool
-	TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256   bool
-	TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 bool
-	TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384   bool
-	TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 bool
-	TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305    bool
-	TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305  bool
 }
 
 type CurvePreferencesStates struct {
@@ -56,8 +31,9 @@ type SSLCheck interface {
 }
 
 func getAllCheck() []SSLCheck {
-	result := GetTLSVersionCheck()
-	return result
+	return append(
+		GetTLSVersionCheck(),
+		GetCipherSuitesCheck()...)
 }
 
 func checkHost(host string) (result TLSState) {
