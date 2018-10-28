@@ -1,6 +1,6 @@
 ## Usage
 ```
-go build main.go
+go build
 
-./main -host=example.com
+./ssl-checker -host=example.com
 ```
