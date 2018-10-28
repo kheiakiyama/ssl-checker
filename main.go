@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -39,13 +40,19 @@ func getAllCheck() []SSLCheck {
 func checkHost(host string) (result TLSState) {
 	result = TLSState{Host: host}
 	checkItems := getAllCheck()
+	var wg sync.WaitGroup
 	for _, item := range checkItems {
-		client := item.CreateClient()
-		_, err := client.Get("https://" + host + "/")
-		if err == nil {
-			item.Pass(&result)
-		}
+		wg.Add(1)
+		go func(item SSLCheck, result *TLSState) {
+			defer wg.Done()
+			client := item.CreateClient()
+			_, err := client.Get("https://" + host + "/")
+			if err == nil {
+				item.Pass(result)
+			}
+		}(item, &result)
 	}
+	wg.Wait()
 	return result
 }
 
