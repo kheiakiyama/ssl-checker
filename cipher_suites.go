@@ -69,7 +69,7 @@ func (check *SSLCheckCipherSuite) CreateClient() (client *http.Client) {
 	return &http.Client{Transport: tr}
 }
 
-func (check *SSLCheckCipherSuite) Pass(result *TLSState) {
+func (check *SSLCheckCipherSuite) Pass(response *http.Response, result *TLSState) {
 	switch check.CipherSuite {
 	case tls.TLS_RSA_WITH_RC4_128_SHA:
 		result.Cliper.TLS_RSA_WITH_RC4_128_SHA = true

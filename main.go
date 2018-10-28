@@ -12,7 +12,6 @@ import (
 type TLSState struct {
 	Host             string
 	Enabled          bool
-	HSTSEnabled      bool
 	Version          TLSVersionStates
 	Cliper           CiperStates
 	CurvePreferences CurvePreferencesStates
@@ -28,13 +27,15 @@ type CurvePreferencesStates struct {
 
 type SSLCheck interface {
 	CreateClient() (client *http.Client)
-	Pass(result *TLSState)
+	Pass(response *http.Response, result *TLSState)
 }
 
 func getAllCheck() []SSLCheck {
-	return append(
+	result := append(
 		GetTLSVersionCheck(),
-		GetCipherSuitesCheck()...)
+		GetCipherSuitesCheck()...,
+	)
+	return append(result, &SSLCheckBasic{})
 }
 
 func checkHost(host string) (result TLSState) {
@@ -46,9 +47,9 @@ func checkHost(host string) (result TLSState) {
 		go func(item SSLCheck, result *TLSState) {
 			defer wg.Done()
 			client := item.CreateClient()
-			_, err := client.Get("https://" + host + "/")
+			response, err := client.Get("https://" + host + "/")
 			if err == nil {
-				item.Pass(result)
+				item.Pass(response, result)
 			}
 		}(item, &result)
 	}

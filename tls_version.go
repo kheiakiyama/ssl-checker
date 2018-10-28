@@ -32,7 +32,7 @@ func (check *SSLCheckVersion) CreateClient() (client *http.Client) {
 	return &http.Client{Transport: tr}
 }
 
-func (check *SSLCheckVersion) Pass(result *TLSState) {
+func (check *SSLCheckVersion) Pass(response *http.Response, result *TLSState) {
 	switch check.Version {
 	case tls.VersionSSL30:
 		result.Version.SSL30 = true
